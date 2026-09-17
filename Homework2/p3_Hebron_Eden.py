@@ -231,7 +231,7 @@ def main() -> None:
     Test all the social network functions defined in this module.
     """
     sn: SocialNetwork = {}
-
+    print("fau id: Ehebron2024")
     print("=== Testing add_user ===")
     print(add_user(sn, "alice", "Alice Smith"))   # True
     print(add_user(sn, "maria", "Maria Cortez"))  # True

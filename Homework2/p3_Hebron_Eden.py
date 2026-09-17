@@ -232,7 +232,7 @@ def main() -> None:
     """
     sn: SocialNetwork = {}
     print("fau id: Ehebron2024")
-    print("=== Testing add_user ===")
+    print("Testing add_user")
     print(add_user(sn, "alice", "Alice Smith"))   # True
     print(add_user(sn, "maria", "Maria Cortez"))  # True
     print(add_user(sn, "joe", "Joseph Adams"))    # True
@@ -240,7 +240,7 @@ def main() -> None:
     print(add_user(sn, "david", "David Benson"))  # True
     print(add_user(sn, "alice", "Alice Again"))   # False (already exists)
 
-    print("\n=== Testing add_friend ===")
+    print("\nTesting add_friend")
     print(add_friend(sn, "alice", "maria"))  # True
     print(add_friend(sn, "maria", "joe"))    # True
     print(add_friend(sn, "maria", "david"))  # True
@@ -252,7 +252,7 @@ def main() -> None:
     for username, (fullname, friends) in sn.items():
         print(f"  {username}: {fullname}, friends={friends}")
 
-    print("\n=== Testing get_friends ===")
+    print("\nTesting get_friends")
     print(get_friends(sn, "alice", 1))  # ['maria']
     print(get_friends(sn, "alice", 2))  # ['maria', 'joe', 'david']
     print(get_friends(sn, "alice", 3))  # ['maria', 'joe', 'david', 'eve']

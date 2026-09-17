@@ -72,14 +72,7 @@ print("d)", anagram_pairs)
 s = ['one', 'two', 'three']
 
 string_lengths = {word: len(word) for word in s}
-
 print("e)", string_lengths)
-
-
-# ---------------------------------------------------------------------------
-# f) Given a string in variable 'text', map each index i to the character c
-#    at that index, only for characters c that are vowels (case insensitive).
-# ---------------------------------------------------------------------------
 text = "Hello world"
 
 vowel_indices = {

@@ -107,7 +107,6 @@ def main():
     print("=" * 60)
     collab_results = display_top_collaborations()
 
-    # Basic sanity checks: correct types, and list is sorted descending.
     assert all(isinstance(t, tuple) and len(t) == 3 for t in collab_results), \
         "Each result should be a (director, actor, count) tuple"
     counts = [count for _, _, count in collab_results]

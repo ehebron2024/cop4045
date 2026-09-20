@@ -1,6 +1,13 @@
+import os
+
+
 # Part a: Write a function called line_number...
 def line_number(file_read: str, file_write: str) -> None:
     """ Defining a function that takes two file names, reads the first file, and writes the line numbers of the first file into the second one. No return value. """
+
+    #   refuse to overwrite the file being read
+    if os.path.abspath(file_read) == os.path.abspath(file_write):
+        raise ValueError('Output file must differ from the input file')
 
     try:
         with open(file_read, 'r') as f_read, \
@@ -96,10 +103,26 @@ def parse_functions(file_read: str) -> tuple:
 def main():
     ''' Testing the functions '''
 
-    line_number('p1_Hebron_Eden.py',
-                'p1_Hebron_Eden.py.txt')
+    source = os.path.abspath(__file__)
+    numbered = source + '.txt'   # output goes to a different file
 
-    functions = parse_functions('p1_Hebron_Eden.py')
+    line_number(source, numbered)
+
+    #   check the numbered copy against the source
+    with open(source, 'r') as f_source, open(numbered, 'r') as f_numbered:
+        original_lines = f_source.readlines()
+        numbered_lines = f_numbered.readlines()
+
+    if len(original_lines) != len(numbered_lines):
+        raise RuntimeError(f'Line count mismatch: {len(original_lines)} vs {len(numbered_lines)}')
+
+    for number, (original, copy) in enumerate(zip(original_lines, numbered_lines), start=1):
+        if copy != f'{number}. {original}':
+            raise RuntimeError(f'Line {number} mismatch')
+
+    print(f'{os.path.basename(source)} numbered into {os.path.basename(numbered)}: OK')
+
+    functions = parse_functions(source)
 
     print(functions)
 

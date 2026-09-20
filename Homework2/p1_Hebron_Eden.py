@@ -1,154 +1,109 @@
-"""
-Problem 1 - Parsing Python files.
+# Part a: Write a function called line_number...
+def line_number(file_read: str, file_write: str) -> None:
+    """ Defining a function that takes two file names, reads the first file, and writes the line numbers of the first file into the second one. No return value. """
 
-Contains:
-    line_number(input_filename, output_filename)
-    parse_functions(filename)
-
-and a main() that exercises both on this very source file.
-"""
-
-import ast
-import io
-import os
-import tokenize
-from typing import Tuple
-
-
-def line_number(input_filename: str, output_filename: str) -> None:
-    """
-    Read a text file and write a copy of it, with each line prefixed
-    by its line number, to another file.
-
-    Parameters
-    ----------
-    input_filename : str
-        Path of the text file to read.
-    output_filename : str
-        Path of the file to create/overwrite with numbered lines.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    Exception
-        Re-raises whatever exception occurs (e.g. FileNotFoundError,
-        PermissionError) after printing a user-friendly message.
-    """
     try:
-        with open(input_filename, 'r', encoding='utf-8') as fin, \
-                open(output_filename, 'w', encoding='utf-8') as fout:
-            for i, line in enumerate(fin, start=1):
-                fout.write(f"{i}. {line}")
-                if not line.endswith('\n'):
-                    fout.write('\n')
-    except Exception as e:
-        print(f"Sorry, something went wrong while numbering the lines "
-              f"of '{input_filename}': {e}")
+        with open(file_read, 'r') as f_read, \
+                open(file_write, 'w') as f_write:
+            for number, line in enumerate(f_read, start=1):
+                f_write.write(f'{number}. {line}')
+
+    except OSError as error: #error handling if file is not found or cannot be opened
+        print(f"Files not found: {error}")
+        raise
+# Part b: Write a function called parse_functions...
+def parse_functions(file_read: str) -> tuple:
+    """Reading Python file and returns the information as a tuple"""
+
+    functions = []
+
+    try:
+        with open(file_read, 'r') as f_read:
+            lines = f_read.readlines()
+
+        number = 0
+
+        while number < len(lines):
+            line = lines[number]
+
+            if line.strip().startswith('def '):
+                function_line = line.strip()
+
+                start = function_line.find('def ') + 4
+                end = function_line.find('(', start)
+                function_name = function_line[start:end].strip()
+
+                arg_start = function_line.find('(') + 1
+                arg_end = function_line.find(')', arg_start)
+                arguments = function_line[arg_start:arg_end].strip()
+
+                function_code = function_line + '\n'
+
+                body_indent = None
+                next_line = number + 1
+
+                while next_line < len(lines):
+                    current_line = lines[next_line]
+
+                    if current_line.strip() == '':
+                        next_line += 1
+                        continue
+
+                    indent = len(current_line) - len(current_line.lstrip())
+
+                    if body_indent is None:
+                        body_indent = indent
+
+                    if indent < body_indent:
+                        break
+
+                    if current_line.strip().startswith(chr(35)):
+                        next_line += 1
+                        continue
+
+                    if chr(35) in current_line:
+                        current_line = current_line.split(chr(35))[0].rstrip() + '\n'
+
+                    if current_line.strip():
+                        function_code += current_line
+
+                    next_line += 1
+
+                functions.append(
+                    (
+                        number + 1,
+                        function_name,
+                        arguments,
+                        function_code
+                    )
+                )
+
+                number = next_line
+            else:
+                number += 1
+
+        #   Sorting alphabetically
+        functions.sort(key=lambda item: item[1])
+
+        return tuple(functions)
+
+    #   user-friendly message and raise the error again
+    except OSError as error:
+        print(f"Error reading the file: {error}")
         raise
 
+    #   main function
+def main():
+    ''' Testing the functions '''
 
-def parse_functions(filename: str) -> Tuple[Tuple[int, str, str, str], ...]:
-    """
-    Parse a .py file and extract information about every top-level
-    function it defines.
+    line_number('p1_Hebron_Eden.py',
+                'p1_Hebron_Eden.py.txt')
 
-    Parameters
-    ----------
-    filename : str
-        Path to the .py file to parse.
+    functions = parse_functions('p1_Hebron_Eden.py')
 
-    Returns
-    -------
-    Tuple[Tuple[int, str, str, str], ...]
-        A tuple of tuples, one per top-level function, ordered
-        alphabetically by function name. Each inner tuple contains:
-            0 - the line number of the function definition
-            1 - the function name
-            2 - the formal argument list, as a string
-            3 - the function's code (signature + body) as a string,
-                with all blank lines and comments removed
-
-    Raises
-    ------
-    Exception
-        Re-raises whatever exception occurs (e.g. FileNotFoundError,
-        SyntaxError) after printing a user-friendly message.
-    """
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            source = f.read()
-
-        tree = ast.parse(source, filename=filename)
-
-        # Use tokenize (not a naive '#' search) so that '#' characters
-        # that appear inside strings/docstrings are never mistaken for
-        # comments.
-        comment_start_col = {}
-        for tok in tokenize.generate_tokens(io.StringIO(source).readline):
-            if tok.type == tokenize.COMMENT:
-                line_no, col = tok.start
-                comment_start_col[line_no] = col
-
-        source_lines = source.splitlines(keepends=True)
-
-        results = []
-        for node in tree.body:
-            if not isinstance(node, ast.FunctionDef):
-                continue
-
-            name = node.name
-            args = ast.unparse(node.args)
-            start_line = node.lineno
-            end_line = node.end_lineno
-
-            cleaned_lines = []
-            for ln in range(start_line, end_line + 1):
-                text = source_lines[ln - 1]
-                # Strip a trailing inline comment, if tokenize found one
-                # on this physical line.
-                if ln in comment_start_col:
-                    text = text[:comment_start_col[ln]]
-                    if not text.endswith('\n'):
-                        text += '\n'
-                # Drop lines that are now blank (were comment-only or
-                # already blank).
-                if text.strip() == '':
-                    continue
-                cleaned_lines.append(text)
-
-            code = ''.join(cleaned_lines)
-            results.append((start_line, name, args, code))
-
-        results.sort(key=lambda item: item[1])
-        return tuple(results)
-
-    except Exception as e:
-        print(f"Sorry, something went wrong while parsing '{filename}': {e}")
-        raise
-
-
-def main() -> None:
-    """Test line_number and parse_functions on this problem's own file."""
-    this_file = os.path.abspath(__file__)
-
-    # a) Test line_number. Write to a differently-named file so we never
-    #    overwrite this program by mistake.
-    numbered_output = this_file + ".txt"
-    line_number(this_file, numbered_output)
-    print(f"line_number: wrote numbered copy of '{this_file}' "
-          f"to '{numbered_output}'\n")
-
-    # b) Test parse_functions and display the result.
-    functions = parse_functions(this_file)
-    print("parse_functions result:")
-    for line_no, name, args, code in functions:
-        num_lines = code.count('\n')
-        print(f"  line {line_no}: {name}({args})  "
-              f"[{num_lines} line(s) of code]")
+    print(functions)
 
 
 if __name__ == '__main__':
     main()
+

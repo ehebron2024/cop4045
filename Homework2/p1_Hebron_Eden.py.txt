@@ -1,0 +1,132 @@
+1. import os
+2. 
+3. 
+4. # Part a: Write a function called line_number...
+5. def line_number(file_read: str, file_write: str) -> None:
+6.     """ Defining a function that takes two file names, reads the first file, and writes the line numbers of the first file into the second one. No return value. """
+7. 
+8.     #   refuse to overwrite the file being read
+9.     if os.path.abspath(file_read) == os.path.abspath(file_write):
+10.         raise ValueError('Output file must differ from the input file')
+11. 
+12.     try:
+13.         with open(file_read, 'r') as f_read, \
+14.                 open(file_write, 'w') as f_write:
+15.             for number, line in enumerate(f_read, start=1):
+16.                 f_write.write(f'{number}. {line}')
+17. 
+18.     except OSError as error: #error handling if file is not found or cannot be opened
+19.         print(f"Files not found: {error}")
+20.         raise
+21. # Part b: Write a function called parse_functions...
+22. def parse_functions(file_read: str) -> tuple:
+23.     """Reading Python file and returns the information as a tuple"""
+24. 
+25.     functions = []
+26. 
+27.     try:
+28.         with open(file_read, 'r') as f_read:
+29.             lines = f_read.readlines()
+30. 
+31.         number = 0
+32. 
+33.         while number < len(lines):
+34.             line = lines[number]
+35. 
+36.             if line.strip().startswith('def '):
+37.                 function_line = line.strip()
+38. 
+39.                 start = function_line.find('def ') + 4
+40.                 end = function_line.find('(', start)
+41.                 function_name = function_line[start:end].strip()
+42. 
+43.                 arg_start = function_line.find('(') + 1
+44.                 arg_end = function_line.find(')', arg_start)
+45.                 arguments = function_line[arg_start:arg_end].strip()
+46. 
+47.                 function_code = function_line + '\n'
+48. 
+49.                 body_indent = None
+50.                 next_line = number + 1
+51. 
+52.                 while next_line < len(lines):
+53.                     current_line = lines[next_line]
+54. 
+55.                     if current_line.strip() == '':
+56.                         next_line += 1
+57.                         continue
+58. 
+59.                     indent = len(current_line) - len(current_line.lstrip())
+60. 
+61.                     if body_indent is None:
+62.                         body_indent = indent
+63. 
+64.                     if indent < body_indent:
+65.                         break
+66. 
+67.                     if current_line.strip().startswith(chr(35)):
+68.                         next_line += 1
+69.                         continue
+70. 
+71.                     if chr(35) in current_line:
+72.                         current_line = current_line.split(chr(35))[0].rstrip() + '\n'
+73. 
+74.                     if current_line.strip():
+75.                         function_code += current_line
+76. 
+77.                     next_line += 1
+78. 
+79.                 functions.append(
+80.                     (
+81.                         number + 1,
+82.                         function_name,
+83.                         arguments,
+84.                         function_code
+85.                     )
+86.                 )
+87. 
+88.                 number = next_line
+89.             else:
+90.                 number += 1
+91. 
+92.         #   Sorting alphabetically
+93.         functions.sort(key=lambda item: item[1])
+94. 
+95.         return tuple(functions)
+96. 
+97.     #   user-friendly message and raise the error again
+98.     except OSError as error:
+99.         print(f"Error reading the file: {error}")
+100.         raise
+101. 
+102.     #   main function
+103. def main():
+104.     ''' Testing the functions '''
+105. 
+106.     source = os.path.abspath(__file__)
+107.     numbered = source + '.txt'   # output goes to a different file
+108. 
+109.     line_number(source, numbered)
+110. 
+111.     #   check the numbered copy against the source
+112.     with open(source, 'r') as f_source, open(numbered, 'r') as f_numbered:
+113.         original_lines = f_source.readlines()
+114.         numbered_lines = f_numbered.readlines()
+115. 
+116.     if len(original_lines) != len(numbered_lines):
+117.         raise RuntimeError(f'Line count mismatch: {len(original_lines)} vs {len(numbered_lines)}')
+118. 
+119.     for number, (original, copy) in enumerate(zip(original_lines, numbered_lines), start=1):
+120.         if copy != f'{number}. {original}':
+121.             raise RuntimeError(f'Line {number} mismatch')
+122. 
+123.     print(f'{os.path.basename(source)} numbered into {os.path.basename(numbered)}: OK')
+124. 
+125.     functions = parse_functions(source)
+126. 
+127.     print(functions)
+128. 
+129. 
+130. if __name__ == '__main__':
+131.     main()
+132. 
